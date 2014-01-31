@@ -137,9 +137,9 @@ var Sudoku = ( function ( $ ){
 	Game.prototype = {
 		/**
 		 * Build the game GUI
-		 * @param {Object} config Configuration options
+		 * @returns {jQuery} Table containing 9x9 input matrix
 		 */
-		buildGUI: function( config ) {
+		buildGUI: function() {
 			var $td, $tr,
 				$table = $( '<table>' )
 					.addClass( 'sudoku-container' );
@@ -267,6 +267,10 @@ var Sudoku = ( function ( $ ){
 				sectRow = Math.floor( rowID / 3 ),
 				sectCol = Math.floor( colID / 3 );
 
+			// This is given as the matrix component (old value in
+			// case of change to the input) in the case of on-insert
+			// validation. However, in the solver, validating the
+			// old number is unnecessary.
 			oldNum = oldNum || '';
 
 			// Skip if empty value
@@ -309,7 +313,12 @@ var Sudoku = ( function ( $ ){
 					}
 				}
 
-				// Insert new value into validation array
+				// Insert new value into validation array even if it isn't
+				// valid. This is on purpose: If there are two numbers in the
+				// same row/col/section and one is replaced, the other still
+				// exists and should be reflected in the validation.
+				// The validation will keep records of duplicates so it can
+				// remove them safely when validating later changes.
 				this.validation.row[rowID].push( num );
 				this.validation.col[colID].push( num );
 				this.validation.sect[sectRow][sectCol].push( num );
@@ -332,10 +341,8 @@ var Sudoku = ( function ( $ ){
 				for ( var col = 0; col < 9; col++ ) {
 					val = this.matrix.row[row][col];
 					// Validate the value
-					isValid = this.validateNumber( val, row, col, val );
+					isValid = this.validateNumber( val, row, col );
 					this.$cellMatrix[row][col].toggleClass( 'sudoku-input-error', !isValid );
-					// Count for progress
-					counter++;
 					if ( !isValid ) {
 						hasError = true;
 					}
@@ -355,7 +362,7 @@ var Sudoku = ( function ( $ ){
 
 			this.recursionCounter++;
 			$nextSquare = this.findClosestEmptySquare( row, col );
-			if ( $nextSquare === null ) {
+			if ( !$nextSquare ) {
 				// End of board
 				return true;
 			} else {
@@ -409,9 +416,19 @@ var Sudoku = ( function ( $ ){
 		 *  square
 		 */
 		findClosestEmptySquare: function( row, col ) {
-			var found = false;
+			var walkingRow, walkingCol, found = false;
 
-			while ( !found ) {
+			for ( var i = ( col + 9*row ); i < 81; i++ ) {
+				walkingRow = Math.floor( i / 9 );
+				walkingCol = i % 9;
+				if ( this.matrix.row[walkingRow][walkingCol] === '' ) {
+					found = true;
+					return this.$cellMatrix[walkingRow][walkingCol];
+				}
+			}
+
+
+/*			while ( !found ) {
 				if ( this.matrix.row[row][col] === '' ) {
 					found = true;
 					return this.$cellMatrix[row][col];
@@ -427,7 +444,7 @@ var Sudoku = ( function ( $ ){
 				} else {
 					col++;
 				}
-			}
+			}*/
 		},
 
 		/**
