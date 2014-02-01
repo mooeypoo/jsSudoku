@@ -273,25 +273,27 @@ var Sudoku = ( function ( $ ){
 			// old number is unnecessary.
 			oldNum = oldNum || '';
 
+			// Remove oldNum from the validation matrices,
+			// if it exists in them.
+			if ( this.validation.row[rowID].indexOf( oldNum ) > -1 ) {
+				this.validation.row[rowID].splice(
+					this.validation.row[rowID].indexOf( oldNum ), 1
+				);
+			}
+			if ( this.validation.col[colID].indexOf( oldNum ) > -1 ) {
+				this.validation.col[colID].splice(
+					this.validation.col[colID].indexOf( oldNum ), 1
+				);
+			}
+			if ( this.validation.sect[sectRow][sectCol].indexOf( oldNum ) > -1 ) {
+				this.validation.sect[sectRow][sectCol].splice(
+					this.validation.sect[sectRow][sectCol].indexOf( oldNum ), 1
+				);
+			}
 			// Skip if empty value
+
 			if ( num !== '' ) {
-				// Remove oldNum from the validation matrices,
-				// if it exists in them.
-				if ( this.validation.row[rowID].indexOf( oldNum ) > -1 ) {
-					this.validation.row[rowID].splice(
-						this.validation.row[rowID].indexOf( oldNum ), 1
-					);
-				}
-				if ( this.validation.col[colID].indexOf( oldNum ) > -1 ) {
-					this.validation.col[colID].splice(
-						this.validation.col[colID].indexOf( oldNum ), 1
-					);
-				}
-				if ( this.validation.sect[sectRow][sectCol].indexOf( oldNum ) > -1 ) {
-					this.validation.sect[sectRow][sectCol].splice(
-						this.validation.sect[sectRow][sectCol].indexOf( oldNum ), 1
-					);
-				}
+
 
 				// Validate value
 				if (
@@ -341,7 +343,7 @@ var Sudoku = ( function ( $ ){
 				for ( var col = 0; col < 9; col++ ) {
 					val = this.matrix.row[row][col];
 					// Validate the value
-					isValid = this.validateNumber( val, row, col );
+					isValid = this.validateNumber( val, row, col, val );
 					this.$cellMatrix[row][col].toggleClass( 'sudoku-input-error', !isValid );
 					if ( !isValid ) {
 						hasError = true;
@@ -407,8 +409,7 @@ var Sudoku = ( function ( $ ){
 		},
 
 		/**
-		 * Find closest empty square relative to the given row
-		 * and column.
+		 * Find closest empty square relative to the given cell.
 		 *
 		 * @param {Number} row Row id
 		 * @param {Number} col Column id
@@ -417,7 +418,6 @@ var Sudoku = ( function ( $ ){
 		 */
 		findClosestEmptySquare: function( row, col ) {
 			var walkingRow, walkingCol, found = false;
-
 			for ( var i = ( col + 9*row ); i < 81; i++ ) {
 				walkingRow = Math.floor( i / 9 );
 				walkingCol = i % 9;
@@ -426,25 +426,6 @@ var Sudoku = ( function ( $ ){
 					return this.$cellMatrix[walkingRow][walkingCol];
 				}
 			}
-
-
-/*			while ( !found ) {
-				if ( this.matrix.row[row][col] === '' ) {
-					found = true;
-					return this.$cellMatrix[row][col];
-				}
-				if ( col >= 8 ) {
-					if ( row >= 8 ) {
-						// End of board
-						return null;
-					} else {
-						col = 0;
-						row++;
-					}
-				} else {
-					col++;
-				}
-			}*/
 		},
 
 		/**
